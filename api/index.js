@@ -6,12 +6,15 @@ const User = require("./models/User.js");
 const app = express();
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-
+const cookieParser = require("cookie-parser");
+const imageDownloader = require("image-downloader");
 const bcryptSalt = bcrypt.genSaltSync(10);
 const jwtSecret = "asdsadasdasdasdad"; //cookie
+const multer = require("multer");
 
 app.use(express.json());
-
+app.use(cookieParser());
+app.use("/uploads", express.static(__dirname + "/uploads"));
 app.use(
   cors({
     credentials: true,
@@ -48,7 +51,7 @@ app.post("/login", async (req, res) => {
         {},
         (err, token) => {
           if (err) throw err;
-          res.cookie("token", token).json("pass ok");
+          res.cookie("token", token).json(userDoc);
         }
       );
     } else {
@@ -61,6 +64,40 @@ app.post("/login", async (req, res) => {
 
 app.get("/test", (req, res) => {
   res.json("test ok");
+});
+
+app.get("/profile", (req, res) => {
+  const { token } = req.cookies;
+  if (token) {
+    jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+      if (err) {
+        return res.status(401).json("invalid token"); // Handle token verification error
+      }
+      const { name, email, _id } = await User.findById(userData.id);
+      res.json({ name, email, _id });
+    });
+  } else {
+    res.json(null);
+  }
+});
+
+app.post("/logout", (req, res) => {
+  res.cookie("token", "").json(true);
+});
+
+app.post("/upload-by-link", async (req, res) => {
+  const { link } = req.body;
+  const newName = "photo" + Date.now() + ".jpg";
+  await imageDownloader.image({
+    url: link,
+    dest: __dirname + "/uploads/" + newName,
+  });
+  res.json(newName);
+});
+
+const photosMiddleware = multer({ dest: "uploads/" });
+app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
+  res.json(req.files);
 });
 
 app.listen(4000);
