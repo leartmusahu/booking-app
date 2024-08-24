@@ -3,6 +3,7 @@ import { differenceInCalendarDays } from "date-fns";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
 import { UserContext } from "./UserContext";
+import PropTypes from "prop-types";
 
 export default function BookingWidget({ place }) {
   const [checkIn, setCheckIn] = useState("");
@@ -102,3 +103,7 @@ export default function BookingWidget({ place }) {
     </div>
   );
 }
+
+BookingWidget.propTypes = {
+  place: PropTypes.string,
+};
