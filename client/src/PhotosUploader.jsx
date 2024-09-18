@@ -7,13 +7,15 @@ export default function PhotosUploader({ addedPhotos, onChange }) {
 
   async function addPhotoByLink(ev) {
     ev.preventDefault();
-    const { data: filename } = await axios.post("/upload-by-link", {
-      link: photoLink,
-    });
-    onChange((prev) => {
-      return [...prev, filename];
-    });
-    setPhotoLink("");
+    try {
+      const { data: filename } = await axios.post("/upload-by-link", {
+        link: photoLink,
+      });
+      onChange((prev) => [...prev, filename]);
+      setPhotoLink("");
+    } catch (error) {
+      console.error("Error adding photo by link:", error);
+    }
   }
 
   async function uploadPhoto(ev) {
@@ -38,13 +40,17 @@ export default function PhotosUploader({ addedPhotos, onChange }) {
 
   function removePhoto(ev, filename) {
     ev.preventDefault();
-    onChange([...addedPhotos.filter((photo) => photo !== filename)]);
+    onChange((prev) => prev.filter((photo) => photo !== filename));
   }
 
   function selectAsMainPhoto(ev, filename) {
     ev.preventDefault();
-    onChange([filename, ...addedPhotos.filter((photo) => photo !== filename)]);
+    onChange((prev) => [
+      filename,
+      ...prev.filter((photo) => photo !== filename),
+    ]);
   }
+
   return (
     <>
       <div className="flex gap-2">
@@ -65,12 +71,13 @@ export default function PhotosUploader({ addedPhotos, onChange }) {
       <div className="mt-2 grid gap-2 grid-cols-3 lg:grid-cols-6 md:grid-col-4">
         {addedPhotos.length > 0 &&
           addedPhotos.map((link) => {
-            // Replace backslashes with forward slashes
+            if (!link) return null; // Skip rendering if link is null or undefined
+
             const correctedLink = link.replace(/\\/g, "/");
             return (
               <div className="h-32 flex relative" key={correctedLink}>
                 <img
-                  src={`http://localhost:4000/${correctedLink}`}
+                  src={`http://localhost:4000/uploads/${correctedLink}`}
                   alt="photo"
                   className="rounded-2xl w-full object-cover position-center"
                 />
@@ -99,8 +106,7 @@ export default function PhotosUploader({ addedPhotos, onChange }) {
                   onClick={(ev) => selectAsMainPhoto(ev, link)}
                   className="cursor-pointer absolute bottom-1 left-1 text-white bg-black bg-opacity-50 rounded-2xl py-2 px-2"
                 >
-                  {" "}
-                  {link === addedPhotos[0] && (
+                  {link === addedPhotos[0] ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -113,8 +119,7 @@ export default function PhotosUploader({ addedPhotos, onChange }) {
                         clipRule="evenodd"
                       />
                     </svg>
-                  )}
-                  {link !== addedPhotos[0] && (
+                  ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -153,7 +158,7 @@ export default function PhotosUploader({ addedPhotos, onChange }) {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15"
+              d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-1.5m-1.5 0h-3m3 0V7.5A2.25 2.25 0 0 0 15.75 5.25h-9A2.25 2.25 0 0 0 4.5 7.5v9m10.5-6h.008v.008H15v-.008z"
             />
           </svg>
           Upload

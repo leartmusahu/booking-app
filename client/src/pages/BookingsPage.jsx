@@ -1,36 +1,44 @@
 import { useEffect, useState } from "react";
 import AccountNav from "../AccountNav";
-import axios from "axios";
-import PlaceImg from "../PlaceImg";
-
 import { Link } from "react-router-dom";
+import PlaceImg from "../PlaceImg";
 import BookingDates from "../BookingDates";
+import axios from "axios";
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState([]);
+
   useEffect(() => {
-    axios.get("bookings").then((response) => {
+    axios.get("/bookings").then((response) => {
       setBookings(response.data);
     });
   }, []);
+
   return (
     <>
       <div>
         <AccountNav />
         <div>
-          {" "}
-          {bookings?.length > 0 &&
+          {bookings?.length > 0 ? (
             bookings.map((booking) => (
               <Link
                 to={`/account/bookings/${booking._id}`}
                 className="flex gap-4 bg-gray-200 rounded-2xl overflow-hidden"
-                key={booking}
+                key={booking._id}
               >
                 <div className="w-48">
-                  <PlaceImg place={booking.place} />
+                  {booking.place ? (
+                    <PlaceImg place={booking.place} />
+                  ) : (
+                    <div>No image available</div>
+                  )}
                 </div>
                 <div className="py-2 pr-3 mt-2 grow">
-                  <h2 className="text-xl">{booking.place.title}</h2>
+                  {booking.place?.title ? (
+                    <h2 className="text-xl">{booking.place.title}</h2>
+                  ) : (
+                    <h2 className="text-xl">No title available</h2>
+                  )}
                   <BookingDates
                     booking={booking}
                     className="mb-2 mt-4 text-gray-500"
@@ -58,7 +66,10 @@ export default function BookingsPage() {
                   </div>
                 </div>
               </Link>
-            ))}
+            ))
+          ) : (
+            <p>No bookings found</p>
+          )}
         </div>
       </div>
     </>

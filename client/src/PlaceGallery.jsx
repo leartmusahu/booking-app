@@ -1,7 +1,10 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+
 export default function PlaceGallery({ place }) {
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+
+  const photos = place?.photos || [];
 
   if (showAllPhotos) {
     return (
@@ -28,49 +31,52 @@ export default function PlaceGallery({ place }) {
               Close photos
             </button>
           </div>
-          {place?.photos?.length > 0 &&
-            place.photos.map((photo) => (
+          {photos.length > 0 &&
+            photos.map((photo) => (
               <div key={photo}>
-                <img src={"http://localhost:4000/uploads/" + photo} alt="" />
+                <img
+                  src={`http://localhost:4000/${photo}`}
+                  alt={`Photo ${photo}`}
+                  className="mx-auto w-[50%] h-96 object-cover"
+                  onError={() =>
+                    console.error(`Failed to load image at ${photo}`)
+                  }
+                />
               </div>
             ))}
         </div>
       </div>
     );
   }
+
   return (
     <div className="relative">
-      {" "}
       <div className="grid gap-2 grid-cols-[2fr_1fr] rounded-3xl overflow-hidden">
         <div>
-          {place.photos?.[0] && (
+          {photos[0] && (
             <div>
               <img
                 onClick={() => setShowAllPhotos(true)}
                 className="aspect-square cursor-pointer object-cover"
-                src={"http://localhost:4000/uploads/" + place.photos[0]}
-                alt=""
+                src={`http://localhost:4000/${photos[0]}`}
               />
             </div>
           )}
         </div>
         <div className="grid">
-          {place.photos?.[0] && (
+          {photos[0] && (
             <img
               onClick={() => setShowAllPhotos(true)}
               className="aspect-square cursor-pointer object-cover"
-              src={"http://localhost:4000/uploads/" + place.photos[0]}
-              alt=""
+              src={`http://localhost:4000/${photos[0]}`}
             />
           )}
           <div className="overflow-hidden">
-            {" "}
-            {place.photos?.[0] && (
+            {photos[1] && (
               <img
                 onClick={() => setShowAllPhotos(true)}
                 className="aspect-square cursor-pointer object-cover relative top-2"
-                src={"http://localhost:4000/uploads/" + place.photos[0]}
-                alt=""
+                src={`http://localhost:4000/${photos[1]}`}
               />
             )}
           </div>
@@ -99,5 +105,8 @@ export default function PlaceGallery({ place }) {
 }
 
 PlaceGallery.propTypes = {
-  place: PropTypes.shape().isRequired,
+  place: PropTypes.shape({
+    title: PropTypes.string,
+    photos: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
 };

@@ -70,9 +70,25 @@ app.post("/login", async (req, res) => {
       res.status(422).json("pass not ok");
     }
   } else {
-    res.json("not found");
+    return res.status(400).json({ message: "User not registered" });
   }
 });
+
+function getUserDataFromReq(req) {
+  return new Promise((resolve, reject) => {
+    const { token } = req.cookies;
+    if (!token) {
+      return reject("No token found");
+    }
+
+    jwt.verify(token, jwtSecret, {}, (err, userData) => {
+      if (err) {
+        return reject("Invalid token");
+      }
+      resolve(userData);
+    });
+  });
+}
 
 app.get("/test", (req, res) => {
   res.json("test ok");
@@ -116,7 +132,8 @@ app.post("/upload", photosMiddleware.array("photos", 100), (req, res) => {
     const ext = parts[parts.length - 1];
     const newPath = path + "." + ext;
     fs.renameSync(path, newPath);
-    uploadedFiles.push(newPath.replace("uploads/", ""));
+
+    uploadedFiles.push(newPath.split("uploads/")[0]);
   }
   console.log("Uploaded files:", uploadedFiles);
   res.json(uploadedFiles);
@@ -149,6 +166,7 @@ app.post("/places", (req, res) => {
       checkIn,
       checkOut,
       maxGuests,
+      price,
     });
     res.json(placeDoc);
   });
@@ -156,7 +174,14 @@ app.post("/places", (req, res) => {
 
 app.get("/user-places", (req, res) => {
   const { token } = req.cookies;
+  if (!token) {
+    return res.status(401).json("No token provided");
+  }
+
   jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+    if (err) {
+      return res.status(401).json("Invalid token");
+    }
     const { id } = userData;
     res.json(await Place.find({ owner: id }));
   });
